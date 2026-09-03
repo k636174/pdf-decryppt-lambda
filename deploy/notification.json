@@ -1,0 +1,25 @@
+{
+  "LambdaFunctionConfigurations": [
+    {
+      "Id": "PdfUnlockIncoming",
+      "LambdaFunctionArn": "arn:aws:lambda:ap-northeast-1:YOUR_ACCOUNT_ID:function:pdf-unlock-lambda",
+      "Events": [
+        "s3:ObjectCreated:*"
+      ],
+      "Filter": {
+        "Key": {
+          "FilterRules": [
+            {
+              "Name": "prefix",
+              "Value": "incoming/"
+            },
+            {
+              "Name": "suffix",
+              "Value": ".pdf"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

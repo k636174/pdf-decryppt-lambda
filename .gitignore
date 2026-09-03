@@ -1,0 +1,24 @@
+# Local notes and generated invocation output
+/memo.txt
+/memo2.txt
+/response.json
+
+# Local credentials and environment settings
+.env
+.env.*
+!.env.example
+/.aws/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Local PDF inputs and outputs
+*.pdf
+
+# OS files
+.DS_Store
+Thumbs.db

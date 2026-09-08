@@ -30,7 +30,7 @@ SES Receipt Rule は管理対象に含めていません。受信ドメイン、
 ZIPが未作成の場合は、リポジトリのルートで次を実行します。スクリプトが `deploy/` と `deploy/package/` を自動作成します。
 
 ```powershell
-.\scripts\build_lambda_zips.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build_lambda_zips.ps1
 ```
 
 ## 新しい Org・AWS アカウントへの展開

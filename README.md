@@ -65,7 +65,7 @@ PyCharm の設定詳細は [インタープリターの設定](https://www.jetbr
 復号Lambdaは `pypdf[crypto]` を使用します。リポジトリのルートで次のスクリプトを実行すると、`deploy/` と `deploy/package/` が自動作成され、Lambda互換のZIPが生成されます。
 
 ```powershell
-.\scripts\build_lambda_zips.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build_lambda_zips.ps1
 ```
 
 ZIPの作成後、`terraform/` からデプロイします。詳しい手順は `terraform/README.md` を参照してください。

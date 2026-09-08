@@ -1,6 +1,0 @@
-# Only the handler and Dockerfile are needed to build the image.
-**
-!Dockerfile
-!lambda_function.py
-!email_extractor.py
-!requirements.txt

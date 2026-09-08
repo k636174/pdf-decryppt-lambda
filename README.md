@@ -1,6 +1,6 @@
 # pdf-unlock-lambda
 
-SES が S3 の `kyuyo-mail-original/` に保存した生メールから PDF 添付を抽出し、既存の復号Lambdaへ連携する2つの AWS Lambda 関数です。ZIP構成では `pypdf[crypto]` を使用するためECRを使用しません。
+SES が S3 の `kyuyo-mail-original/` に保存した生メールから PDF 添付を抽出し、復号Lambdaへ連携する2つのZIP形式 AWS Lambda関数です。PDFの復号には `pypdf[crypto]` を使用します。
 
 ## 処理の流れ
 
@@ -17,7 +17,6 @@ SES が S3 の `kyuyo-mail-original/` に保存した生メールから PDF 添�
 |----------------------------|-----------------------------------------------------|
 | `lambda_function.py`       | S3 イベントを処理する Lambda ハンドラー             |
 | `email_extractor.py`       | SES保存メールからPDF添付を抽出するZIP Lambda         |
-| `Dockerfile`               | Python 3.13 の Lambda ベースイメージに依存関係を追加 |
 | `terraform/`               | AWS リソースとLambdaデプロイのTerraform定義         |
 
 ## 設定
@@ -60,24 +59,12 @@ SES が S3 の `kyuyo-mail-original/` に保存した生メールから PDF 添�
 
 PyCharm の設定詳細は [インタープリターの設定](https://www.jetbrains.com/help/pycharm/configuring-python-interpreter.html)と [Python 実行構成](https://www.jetbrains.com/help/pycharm/run-debug-configuration-python.html)を参照してください。
 
-## コンテナのビルド
+## ZIP Lambdaのデプロイ
 
-Docker を利用できる環境で、リポジトリのルートから実行します。
-
-```sh
-docker build -t pdf-unlock-lambda .
-```
-
-ビルドしたイメージを ECR に登録し、Lambda のコンテナイメージとして使用します。ビルドする CPU アーキテクチャと Lambda 側の設定を合わせてください。
-
-## ECRを使わないZIP Lambdaへの移行
-
-ZIP版の復号Lambdaは `pypdf[crypto]` を使用します。`pip` の `--platform manylinux2014_x86_64` オプションでLambda互換の依存パッケージを `deploy/package/` に配置し、`lambda_function.py` とまとめた `deploy/pdf-unlock-function.zip` をAWS CLIでデプロイします。
+復号Lambdaは `pypdf[crypto]` を使用します。`pip` の `--platform manylinux2014_x86_64` オプションでLambda互換の依存パッケージを `deploy/package/` に配置し、`lambda_function.py` とまとめて `deploy/pdf-unlock-function.zip` を作成します。ZIPの作成後、`terraform/` からデプロイします。詳しい手順は `terraform/README.md` を参照してください。
 
 - `pdf-unlock-lambda-zip`：Python 3.13 ZIP形式の復号Lambda
 - `pdf-attachment-extractor`：メール添付抽出Lambda
-
-既存のImage Lambdaは比較テストが終わるまで残し、S3通知を新Lambdaへ切り替えた後も自動削除しません。
 
 ## S3イベント設定
 
@@ -98,5 +85,3 @@ Terraformで次の2種類の `s3:ObjectCreated:*` 通知を設定します。
 ## Git 管理対象外
 
 `memo.txt` と `memo2.txt` はローカルの作業メモ・ブログ下書き、`response.json` は実行結果のため、コミット対象から除外しています。ローカルの PDF、環境変数ファイル、Python のキャッシュも除外します。
-
-Docker のビルドコンテキストには `Dockerfile` と `lambda_function.py` のみを含めます。

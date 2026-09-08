@@ -2,6 +2,13 @@
 aws_region  = "ap-northeast-1"
 bucket_name = "your-org-pdf-unlock-123456789012"
 
+# 必要に応じて共通タグを上書きします。
+# common_tags = {
+#   ManagedBy   = "Terraform"
+#   Project     = "pdf-unlock-lambda"
+#   Environment = "production"
+# }
+
 # Route53 / SES の値は対象環境に合わせて設定してください。
 # route53_zone_id             = "Z0123456789EXAMPLE"
 # ses_domain                  = "ses.example.com"

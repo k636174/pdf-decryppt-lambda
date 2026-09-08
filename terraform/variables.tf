@@ -87,6 +87,15 @@ variable "extractor_log_retention_days" {
   default     = 90
 }
 
+variable "common_tags" {
+  description = "タグをサポートするすべてのAWSリソースへ付与する共通タグ。"
+  type        = map(string)
+  default = {
+    ManagedBy = "Terraform"
+    Project   = "pdf-unlock-lambda"
+  }
+}
+
 variable "unlock_log_retention_days" {
   description = "PDF 復号 Lambda のログ保持日数。"
   type        = number

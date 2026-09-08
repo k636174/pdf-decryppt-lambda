@@ -19,6 +19,8 @@
 
 S3 内のオブジェクトは Terraform の管理対象ではありません。
 
+タグをサポートするAWSリソースには、AWS Providerの `default_tags` により `ManagedBy = Terraform` と `Project = pdf-unlock-lambda` を付与します。環境名などを追加する場合は `common_tags` を環境ごとの `terraform.tfvars` で上書きします。Route53レコードやIAMポリシーアタッチメントなど、AWS APIまたはTerraformリソースがタグをサポートしないものには付与されません。
+
 同じ Receipt Rule Set に存在する別用途の `receive-to-s3` ルールと、個人メールアドレスの SES identity はこのプロジェクトの管理対象外です。共有する SES 設定セット自体は管理しますが、個人メールアドレス identity との関連付けは管理しません。
 
 ## 前提条件

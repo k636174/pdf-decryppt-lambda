@@ -82,15 +82,15 @@ variable "lambda_timeout" {
 }
 
 variable "extractor_log_retention_days" {
-  description = "メール添付抽出 Lambda のログ保持日数。0 は無期限です。"
+  description = "メール添付抽出 Lambda のログ保持日数。"
   type        = number
-  default     = 0
+  default     = 90
 }
 
 variable "unlock_log_retention_days" {
   description = "PDF 復号 Lambda のログ保持日数。"
   type        = number
-  default     = 30
+  default     = 90
 }
 
 variable "route53_zone_id" {

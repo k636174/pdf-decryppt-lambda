@@ -1,0 +1,12 @@
+# 環境ごとに異なる、グローバルに一意な名前を指定します。
+aws_region  = "ap-northeast-1"
+bucket_name = "your-org-pdf-unlock-123456789012"
+
+# 必要に応じて環境ごとに変更します。
+# lambda_role_name       = "pdf-unlock-lambda-role"
+# extractor_function_name = "pdf-attachment-extractor"
+# unlock_function_name    = "pdf-unlock-lambda-zip"
+
+# 実際のパスワードはこのサンプルや Git 管理ファイルに書かず、
+# TF_VAR_pdf_password または Git 管理しない terraform.tfvars で指定します。
+# pdf_password = "DO-NOT-COMMIT-A-REAL-PASSWORD"

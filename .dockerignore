@@ -2,3 +2,5 @@
 **
 !Dockerfile
 !lambda_function.py
+!email_extractor.py
+!requirements.txt

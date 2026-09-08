@@ -8,6 +8,7 @@
         "s3:PutObject"
       ],
       "Resource": [
+        "arn:aws:s3:::YOUR_BUCKET_NAME/kyuyo-mail-original/*",
         "arn:aws:s3:::YOUR_BUCKET_NAME/incoming/*",
         "arn:aws:s3:::YOUR_BUCKET_NAME/decrypted/*"
       ]

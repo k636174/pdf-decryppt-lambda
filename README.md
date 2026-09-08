@@ -1,34 +1,71 @@
 # pdf-unlock-lambda
 
-S3 の `incoming/` にアップロードされた PDF を、環境変数で指定したパスワードと qpdf で復号し、同じバケットの `decrypted/` に保存する AWS Lambda 関数です。
+SES が S3 の `kyuyo-mail-original/` に保存した生メールから PDF 添付を抽出し、既存の復号Lambdaへ連携する2つの AWS Lambda 関数です。ZIP構成では `pypdf[crypto]` を使用するためECRを使用しません。
 
 ## 処理の流れ
 
-1. S3 イベントからバケット名とオブジェクトキーを取得します。
-2. `incoming/` 配下の PDF を `/tmp` にダウンロードします。
-3. qpdf で復号し、`decrypted/<ファイル名>` にアップロードします。
+1. ZIP形式の `pdf-attachment-extractor` が `kyuyo-mail-original/` のS3イベントを受け、生メール（RFC 5322/MIME）から PDF 添付を抽出します。
+2. 添付を `incoming/<SESのメールオブジェクト名>/<添付ファイル名>` に保存します。
+3. 既存の `pdf-unlock-lambda` が、その保存で発生するS3イベントを受け、PDF を `/tmp` にダウンロードします。
+4. pypdf で復号し、`decrypted/<添付ファイル名>` にアップロードします。
 
-元の S3 オブジェクトは残ります。qpdf がゼロ以外の終了コードを返すと、関数はエラーになります。
+元の S3 オブジェクトは残ります。PDF の復号に失敗すると、関数はエラーになります。
 
 ## ファイル構成
 
-| ファイル | 用途 |
-| --- | --- |
-| `lambda_function.py` | S3 イベントを処理する Lambda ハンドラー |
-| `Dockerfile` | Python 3.13 の Lambda ベースイメージに qpdf を追加 |
-| `deploy/trust-policy.json` | Lambda 実行ロールの信頼ポリシー |
-| `deploy/s3-policy.json` | 対象バケットへの読み書き権限の設定例 |
-| `deploy/notification.json` | `incoming/` 配下の `.pdf` 作成を通知する S3 設定例 |
+| ファイル                   | 用途                                                |
+|----------------------------|-----------------------------------------------------|
+| `lambda_function.py`       | S3 イベントを処理する Lambda ハンドラー             |
+| `email_extractor.py`       | SES保存メールからPDF添付を抽出するZIP Lambda         |
+| `Dockerfile`               | Python 3.13 の Lambda ベースイメージに依存関係を追加 |
+| `deploy/trust-policy.json` | Lambda 実行ロールの信頼ポリシー                     |
+| `deploy/s3-policy.json`    | 対象バケットへの読み書き権限の設定例                |
+| `deploy/notification.json` | `incoming/` 配下の `.pdf` 作成を通知する S3 設定例  |
 
 ## 設定
 
 - Lambda の環境変数 `PDF_PASSWORD` に PDF のパスワードを設定します。コードや Git 管理ファイルには記載しません。
+- 添付抽出LambdaでSESの保存先プレフィックスを変える場合だけ、環境変数 `MAIL_PREFIX` を設定します。既定値は `kyuyo-mail-original/` です。
 - `deploy/s3-policy.json` の `YOUR_BUCKET_NAME` を対象バケット名に置き換えます。
 - `deploy/notification.json` の `YOUR_ACCOUNT_ID`、リージョン、関数名をデプロイ先に合わせます。
 - Lambda 実行ロールには S3 の読み書き権限とログ出力権限を設定します。
 - S3 から Lambda を呼び出すためのリソースベースポリシーも別途設定します。通知設定だけでは呼び出し権限は付与されません。
 
 設定 JSON はひな形です。このリポジトリには AWS リソースの作成やデプロイを自動化するスクリプトは含まれていません。
+
+## PyCharm でローカル開発（Windows）
+
+1. Python 3.13 をインストールします（Lambda と同じバージョン）。
+2. PyCharm の **Open** でこのプロジェクトのフォルダーを開きます。
+3. **Settings → Python → Interpreter**（バージョンによっては **Project → Python Interpreter**）からローカルの Virtualenv を追加します。ベースに Python 3.13、保存先にプロジェクト内の `.venv` を指定します。
+4. PyCharm の Terminal で依存パッケージをインストールします。
+
+   ```powershell
+   .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+   ```
+
+5. 手元の暗号化 PDF を、例えば `samples/input.pdf` として置きます。
+6. **Run → Edit Configurations → + → Python** で次を設定します。
+
+   | 項目                  | 値                                     |
+   |-----------------------|----------------------------------------|
+   | Script path           | プロジェクト内の `local_run.py`        |
+   | Parameters            | `samples/input.pdf samples/output.pdf` |
+   | Working directory     | プロジェクトのルートフォルダー         |
+   | Python interpreter    | `.venv` の Python                      |
+   | Environment variables | `PDF_PASSWORD=対象PDFのパスワード`     |
+
+7. `lambda_function.py` にブレークポイントを置き、**Debug** で実行します。
+
+実行構成は個人用にし、パスワードを含む設定を共有ファイルに保存しないでください。`.idea/` は Git 管理から除外しています。`.env` ファイルは自動読み込みしません。環境変数を省略した場合はパスワードを対話入力します（Terminal からの実行を推奨）。
+
+```powershell
+.\.venv\Scripts\python.exe local_run.py samples/input.pdf samples/output.pdf
+```
+
+`local_run.py` は S3 のダウンロード・アップロードだけをローカルファイル操作に置き換え、実際の Lambda ハンドラーと pypdf を実行します。AWS 認証情報やバケットは不要です。既存の出力ファイルへの上書きは拒否します。ローカル実行用の一時フォルダーは実行終了時に削除します。S3 権限・通知・Lambda上の動作確認は AWS 環境で別途必要です。
+
+PyCharm の設定詳細は [インタープリターの設定](https://www.jetbrains.com/help/pycharm/configuring-python-interpreter.html)と [Python 実行構成](https://www.jetbrains.com/help/pycharm/run-debug-configuration-python.html)を参照してください。
 
 ## コンテナのビルド
 
@@ -40,10 +77,28 @@ docker build -t pdf-unlock-lambda .
 
 ビルドしたイメージを ECR に登録し、Lambda のコンテナイメージとして使用します。ビルドする CPU アーキテクチャと Lambda 側の設定を合わせてください。
 
+## ECRを使わないZIP Lambdaへの移行
+
+ZIP版の復号Lambdaは `pypdf[crypto]` を使用します。`pip` の `--platform manylinux2014_x86_64` オプションでLambda互換の依存パッケージを `deploy/package/` に配置し、`lambda_function.py` とまとめた `deploy/pdf-unlock-function.zip` をAWS CLIでデプロイします。
+
+- `pdf-unlock-lambda-zip`：Python 3.13 ZIP形式の復号Lambda
+- `pdf-attachment-extractor`：メール添付抽出Lambda
+
+既存のImage Lambdaは比較テストが終わるまで残し、S3通知を新Lambdaへ切り替えた後も自動削除しません。
+
+## S3イベント設定
+
+次の2種類の `s3:ObjectCreated:*` 通知を設定します。ひな形は `deploy/notification.json` にあります。
+
+- `kyuyo-mail-original/` → `pdf-attachment-extractor`：生メールからPDF添付を抽出
+- `incoming/` かつ `.pdf` → `pdf-unlock-lambda`：抽出済みPDFを復号
+
+既にバケットに保存されているメールオブジェクトは、通知設定を追加しただけでは処理されません。対象オブジェクトをコピーし直してイベントを発生させるか、同じ形式のS3イベントでLambdaを一度手動実行してください。
+
 ## 現在の動作上の注意
 
 - パスワードは環境変数で設定した1種類を全 PDF に使用します。
-- 出力キーにはファイル名のみを使用します。例えば `incoming/a/report.pdf` と `incoming/b/report.pdf` は、どちらも `decrypted/report.pdf` に保存されるため上書きされます。
+- `decrypted/` はフラットに配置します。別メールに同名の添付がある場合、後から処理したファイルで上書きされます。同じメール内の同名添付には、`incoming/` 保存時に `-2` 以降を付けます。
 - ハンドラーは拡張子の大文字・小文字を区別しませんが、通知設定例のサフィックスは `.pdf` です。
 - 一時ファイルの明示的な削除は実装していません。対象 PDF のサイズや件数に応じて、Lambda の一時ストレージとタイムアウトを設定してください。
 

@@ -18,6 +18,7 @@ SES が S3 の `kyuyo-mail-original/` に保存した生メールから PDF 添�
 | `lambda_function.py`       | S3 イベントを処理する Lambda ハンドラー             |
 | `email_extractor.py`       | SES保存メールからPDF添付を抽出するZIP Lambda         |
 | `terraform/`               | AWS リソースとLambdaデプロイのTerraform定義         |
+| `scripts/build_lambda_zips.ps1` | Lambda用ZIPを生成するPowerShellスクリプト       |
 
 ## 設定
 
@@ -61,7 +62,13 @@ PyCharm の設定詳細は [インタープリターの設定](https://www.jetbr
 
 ## ZIP Lambdaのデプロイ
 
-復号Lambdaは `pypdf[crypto]` を使用します。`pip` の `--platform manylinux2014_x86_64` オプションでLambda互換の依存パッケージを `deploy/package/` に配置し、`lambda_function.py` とまとめて `deploy/pdf-unlock-function.zip` を作成します。ZIPの作成後、`terraform/` からデプロイします。詳しい手順は `terraform/README.md` を参照してください。
+復号Lambdaは `pypdf[crypto]` を使用します。リポジトリのルートで次のスクリプトを実行すると、`deploy/` と `deploy/package/` が自動作成され、Lambda互換のZIPが生成されます。
+
+```powershell
+.\scripts\build_lambda_zips.ps1
+```
+
+ZIPの作成後、`terraform/` からデプロイします。詳しい手順は `terraform/README.md` を参照してください。
 
 - `pdf-unlock-lambda-zip`：Python 3.13 ZIP形式の復号Lambda
 - `pdf-attachment-extractor`：メール添付抽出Lambda

@@ -1,0 +1,9 @@
+.terraform/
+/email-extractor.zip
+/tfplan
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform.tfvars.example
+crash.log
+crash.*.log

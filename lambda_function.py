@@ -1,12 +1,25 @@
 import boto3
 import os
-import subprocess
+import tempfile
 import urllib.parse
 from pathlib import Path
+
+from pypdf import PdfReader, PdfWriter
 
 s3 = boto3.client("s3")
 
 PDF_PASSWORD = os.environ["PDF_PASSWORD"]
+
+
+def decrypt_pdf(input_path, output_path):
+    reader = PdfReader(input_path)
+    if reader.is_encrypted and reader.decrypt(PDF_PASSWORD) == 0:
+        raise RuntimeError("PDF password is incorrect")
+
+    writer = PdfWriter()
+    writer.clone_document_from_reader(reader)
+    with open(output_path, "wb") as output_file:
+        writer.write(output_file)
 
 
 def lambda_handler(event, context):
@@ -32,8 +45,8 @@ def lambda_handler(event, context):
 
         filename = Path(key).name
 
-        input_path = f"/tmp/{filename}"
-        output_path = f"/tmp/decrypted-{filename}"
+        input_path = str(Path(tempfile.gettempdir()) / filename)
+        output_path = str(Path(tempfile.gettempdir()) / f"decrypted-{filename}")
 
         print(f"Downloading s3://{bucket}/{key}")
 
@@ -43,28 +56,8 @@ def lambda_handler(event, context):
             input_path
         )
 
-        print("Running qpdf")
-
-        result = subprocess.run(
-            [
-                "qpdf",
-                f"--password={PDF_PASSWORD}",
-                "--decrypt",
-                input_path,
-                output_path,
-            ],
-            capture_output=True,
-            text=True
-        )
-
-        print("qpdf returncode:", result.returncode)
-        print("qpdf stdout:", result.stdout)
-        print("qpdf stderr:", result.stderr)
-
-        if result.returncode != 0:
-            raise RuntimeError(
-                f"qpdf failed: {result.stderr}"
-            )
+        print("Decrypting PDF with pypdf")
+        decrypt_pdf(input_path, output_path)
 
         output_key = f"decrypted/{filename}"
 

@@ -8,6 +8,7 @@
 .env.*
 !.env.example
 /.aws/
+/.codex/
 
 # Python
 __pycache__/
@@ -15,6 +16,24 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+.idea/
+/deploy/package/
+/deploy/*.zip
+/deploy/invoke-result.json
+/deploy/*.resolved.json
+/deploy/notification-before-zip-switch.json
+/deploy/test-event.json
+/deploy/zip-validation-event.json
+/deploy/zip-validation-response.json
+
+# Terraform local state and plans (the dependency lock file is committed)
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+terraform.tfvars
+*.auto.tfvars
 
 # Local PDF inputs and outputs
 *.pdf

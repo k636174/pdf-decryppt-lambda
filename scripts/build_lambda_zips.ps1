@@ -8,8 +8,8 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $deployDir = Join-Path $repoRoot "deploy"
 $packageDir = Join-Path $deployDir "package"
 $requirements = Join-Path $repoRoot "requirements.txt"
-$unlockHandler = Join-Path $repoRoot "lambda_function.py"
-$extractorHandler = Join-Path $repoRoot "email_extractor.py"
+$unlockHandler = Join-Path $repoRoot "lambdas/pdf_unlock/lambda_function.py"
+$extractorHandler = Join-Path $repoRoot "lambdas/email_extractor/email_extractor.py"
 $unlockZip = Join-Path $deployDir "pdf-unlock-function.zip"
 $extractorZip = Join-Path $deployDir "email-extractor.zip"
 

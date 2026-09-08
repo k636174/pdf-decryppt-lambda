@@ -4,7 +4,7 @@ import unittest
 from email.message import EmailMessage
 from unittest.mock import Mock, patch
 
-import email_extractor
+from lambdas.email_extractor import email_extractor
 
 
 class ExtractPdfAttachmentsTests(unittest.TestCase):

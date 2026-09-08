@@ -39,7 +39,7 @@ def main():
         with patch("boto3.client", return_value=LocalS3()), patch(
             "tempfile.gettempdir", return_value=workdir
         ):
-            import lambda_function
+            from lambdas.pdf_unlock import lambda_function
 
             event = {"Records": [{"s3": {
                 "bucket": {"name": "local-only"},

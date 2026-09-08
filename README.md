@@ -15,8 +15,8 @@ SES が S3 の `kyuyo-mail-original/` に保存した生メールから PDF 添�
 
 | ファイル                   | 用途                                                |
 |----------------------------|-----------------------------------------------------|
-| `lambda_function.py`       | S3 イベントを処理する Lambda ハンドラー             |
-| `email_extractor.py`       | SES保存メールからPDF添付を抽出するZIP Lambda         |
+| `lambdas/pdf_unlock/lambda_function.py` | PDFを復号するLambdaハンドラー             |
+| `lambdas/email_extractor/email_extractor.py` | SES保存メールからPDF添付を抽出するLambdaハンドラー |
 | `terraform/`               | AWS リソースとLambdaデプロイのTerraform定義         |
 | `scripts/build_lambda_zips.ps1` | Lambda用ZIPを生成するPowerShellスクリプト       |
 
@@ -48,7 +48,7 @@ SES が S3 の `kyuyo-mail-original/` に保存した生メールから PDF 添�
    | Python interpreter    | `.venv` の Python                      |
    | Environment variables | `PDF_PASSWORD=対象PDFのパスワード`     |
 
-7. `lambda_function.py` にブレークポイントを置き、**Debug** で実行します。
+7. `lambdas/pdf_unlock/lambda_function.py` にブレークポイントを置き、**Debug** で実行します。
 
 実行構成は個人用にし、パスワードを含む設定を共有ファイルに保存しないでください。`.idea/` は Git 管理から除外しています。`.env` ファイルは自動読み込みしません。環境変数を省略した場合はパスワードを対話入力します（Terminal からの実行を推奨）。
 

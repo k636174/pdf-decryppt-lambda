@@ -13,12 +13,12 @@ SES が S3 の `kyuyo-mail-original/` に保存した生メールから PDF 添�
 
 ## ファイル構成
 
-| ファイル                   | 用途                                                |
-|----------------------------|-----------------------------------------------------|
-| `lambdas/pdf_unlock/lambda_function.py` | PDFを復号するLambdaハンドラー             |
-| `lambdas/email_extractor/email_extractor.py` | SES保存メールからPDF添付を抽出するLambdaハンドラー |
-| `terraform/`               | AWS リソースとLambdaデプロイのTerraform定義         |
-| `scripts/build_lambda_zips.ps1` | Lambda用ZIPを生成するPowerShellスクリプト       |
+| ファイル                                     | 用途                                                 |
+|----------------------------------------------|------------------------------------------------------|
+| `lambdas/pdf_unlock/lambda_function.py`      | PDFを復号するLambdaハンドラー                        |
+| `lambdas/email_extractor/email_extractor.py` | SES保存メールからPDF添付を抽出するLambdaハンドラー   |
+| `terraform/`                                 | AWS リソースとLambdaデプロイのTerraform定義          |
+| `scripts/build_lambda_zips.ps1`              | Lambda用ZIPを生成するPowerShellスクリプト            |
 
 ## 設定
 
@@ -91,4 +91,4 @@ Terraformで次の2種類の `s3:ObjectCreated:*` 通知を設定します。
 
 ## Git 管理対象外
 
-`memo.txt` と `memo2.txt` はローカルの作業メモ・ブログ下書き、`response.json` は実行結果のため、コミット対象から除外しています。ローカルの PDF、環境変数ファイル、Python のキャッシュも除外します。
+ローカルの PDF、環境変数ファイル、Python のキャッシュは除外します。

@@ -18,20 +18,13 @@ SES が S3 の `kyuyo-mail-original/` に保存した生メールから PDF 添�
 | `lambda_function.py`       | S3 イベントを処理する Lambda ハンドラー             |
 | `email_extractor.py`       | SES保存メールからPDF添付を抽出するZIP Lambda         |
 | `Dockerfile`               | Python 3.13 の Lambda ベースイメージに依存関係を追加 |
-| `deploy/trust-policy.json` | Lambda 実行ロールの信頼ポリシー                     |
-| `deploy/s3-policy.json`    | 対象バケットへの読み書き権限の設定例                |
-| `deploy/notification.json` | `incoming/` 配下の `.pdf` 作成を通知する S3 設定例  |
+| `terraform/`               | AWS リソースとLambdaデプロイのTerraform定義         |
 
 ## 設定
 
 - Lambda の環境変数 `PDF_PASSWORD` に PDF のパスワードを設定します。コードや Git 管理ファイルには記載しません。
 - 添付抽出LambdaでSESの保存先プレフィックスを変える場合だけ、環境変数 `MAIL_PREFIX` を設定します。既定値は `kyuyo-mail-original/` です。
-- `deploy/s3-policy.json` の `YOUR_BUCKET_NAME` を対象バケット名に置き換えます。
-- `deploy/notification.json` の `YOUR_ACCOUNT_ID`、リージョン、関数名をデプロイ先に合わせます。
-- Lambda 実行ロールには S3 の読み書き権限とログ出力権限を設定します。
-- S3 から Lambda を呼び出すためのリソースベースポリシーも別途設定します。通知設定だけでは呼び出し権限は付与されません。
-
-設定 JSON はひな形です。このリポジトリには AWS リソースの作成やデプロイを自動化するスクリプトは含まれていません。
+- AWS リソース、IAMポリシー、S3通知は `terraform/` で管理します。設定方法は `terraform/README.md` を参照してください。
 
 ## PyCharm でローカル開発（Windows）
 
@@ -88,7 +81,7 @@ ZIP版の復号Lambdaは `pypdf[crypto]` を使用します。`pip` の `--platf
 
 ## S3イベント設定
 
-次の2種類の `s3:ObjectCreated:*` 通知を設定します。ひな形は `deploy/notification.json` にあります。
+Terraformで次の2種類の `s3:ObjectCreated:*` 通知を設定します。
 
 - `kyuyo-mail-original/` → `pdf-attachment-extractor`：生メールからPDF添付を抽出
 - `incoming/` かつ `.pdf` → `pdf-unlock-lambda`：抽出済みPDFを復号
@@ -99,7 +92,7 @@ ZIP版の復号Lambdaは `pypdf[crypto]` を使用します。`pip` の `--platf
 
 - パスワードは環境変数で設定した1種類を全 PDF に使用します。
 - `decrypted/` はフラットに配置します。別メールに同名の添付がある場合、後から処理したファイルで上書きされます。同じメール内の同名添付には、`incoming/` 保存時に `-2` 以降を付けます。
-- ハンドラーは拡張子の大文字・小文字を区別しませんが、通知設定例のサフィックスは `.pdf` です。
+- ハンドラーは拡張子の大文字・小文字を区別しませんが、Terraformで設定する通知のサフィックスは `.pdf` です。
 - 一時ファイルの明示的な削除は実装していません。対象 PDF のサイズや件数に応じて、Lambda の一時ストレージとタイムアウトを設定してください。
 
 ## Git 管理対象外

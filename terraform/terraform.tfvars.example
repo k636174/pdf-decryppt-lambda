@@ -2,6 +2,15 @@
 aws_region  = "ap-northeast-1"
 bucket_name = "your-org-pdf-unlock-123456789012"
 
+# Route53 / SES の値は対象環境に合わせて設定してください。
+# route53_zone_id             = "Z0123456789EXAMPLE"
+# ses_domain                  = "ses.example.com"
+# ses_mail_from_domain        = "mail.ses.example.com"
+# ses_configuration_set_name = "example-configuration-set"
+# ses_receipt_rule_set_name   = "example-receiving"
+# ses_receipt_rule_name       = "save-mail-to-s3"
+# ses_receipt_recipient       = "recipient@ses.example.com"
+
 # 必要に応じて環境ごとに変更します。
 # lambda_role_name       = "pdf-unlock-lambda-role"
 # extractor_function_name = "pdf-attachment-extractor"

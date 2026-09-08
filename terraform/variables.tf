@@ -92,3 +92,38 @@ variable "unlock_log_retention_days" {
   type        = number
   default     = 30
 }
+
+variable "route53_zone_id" {
+  description = "SES 用 DNS レコードを作成する Route53 Hosted Zone ID。"
+  type        = string
+}
+
+variable "ses_domain" {
+  description = "メール受信と送信 identity に使用する SES ドメイン。"
+  type        = string
+}
+
+variable "ses_mail_from_domain" {
+  description = "SES domain identity のカスタム MAIL FROM ドメイン。"
+  type        = string
+}
+
+variable "ses_configuration_set_name" {
+  description = "SES domain identity が使用する設定セット名。"
+  type        = string
+}
+
+variable "ses_receipt_rule_set_name" {
+  description = "受信ルールを格納し、active にする SES Receipt Rule Set 名。"
+  type        = string
+}
+
+variable "ses_receipt_rule_name" {
+  description = "給与明細メールを S3 に保存する SES Receipt Rule 名。"
+  type        = string
+}
+
+variable "ses_receipt_recipient" {
+  description = "給与明細メールを受信する SES Receipt Rule の宛先。"
+  type        = string
+}

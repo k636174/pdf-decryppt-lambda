@@ -159,6 +159,98 @@ resource "aws_cloudwatch_log_group" "unlock" {
   }
 }
 
+resource "aws_sesv2_configuration_set" "default" {
+  configuration_set_name = var.ses_configuration_set_name
+
+  reputation_options {
+    reputation_metrics_enabled = true
+  }
+
+  sending_options {
+    sending_enabled = true
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_sesv2_email_identity" "domain" {
+  email_identity         = var.ses_domain
+  configuration_set_name = aws_sesv2_configuration_set.default.configuration_set_name
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_sesv2_email_identity_mail_from_attributes" "domain" {
+  email_identity         = aws_sesv2_email_identity.domain.email_identity
+  mail_from_domain       = var.ses_mail_from_domain
+  behavior_on_mx_failure = "USE_DEFAULT_VALUE"
+}
+
+resource "aws_route53_record" "ses_receiving_mx" {
+  zone_id = var.route53_zone_id
+  name    = var.ses_domain
+  type    = "MX"
+  ttl     = 300
+  records = ["10 inbound-smtp.${var.aws_region}.amazonaws.com"]
+}
+
+resource "aws_route53_record" "ses_dkim" {
+  count = 3
+
+  zone_id = var.route53_zone_id
+  name    = "${aws_sesv2_email_identity.domain.dkim_signing_attributes[0].tokens[count.index]}._domainkey.${var.ses_domain}"
+  type    = "CNAME"
+  ttl     = 1800
+  records = ["${aws_sesv2_email_identity.domain.dkim_signing_attributes[0].tokens[count.index]}.dkim.amazonses.com"]
+}
+
+resource "aws_route53_record" "ses_mail_from_mx" {
+  zone_id = var.route53_zone_id
+  name    = var.ses_mail_from_domain
+  type    = "MX"
+  ttl     = 300
+  records = ["10 feedback-smtp.${var.aws_region}.amazonses.com"]
+}
+
+resource "aws_ses_receipt_rule_set" "receiving" {
+  rule_set_name = var.ses_receipt_rule_set_name
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_ses_receipt_rule" "save_pay_statement_to_s3" {
+  name          = var.ses_receipt_rule_name
+  rule_set_name = aws_ses_receipt_rule_set.receiving.rule_set_name
+  recipients    = [var.ses_receipt_recipient]
+  enabled       = true
+  scan_enabled  = false
+  tls_policy    = "Optional"
+
+  s3_action {
+    bucket_name       = aws_s3_bucket.target.bucket
+    object_key_prefix = trimsuffix(var.mail_prefix, "/")
+    position          = 1
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "aws_ses_active_receipt_rule_set" "receiving" {
+  rule_set_name = aws_ses_receipt_rule_set.receiving.rule_set_name
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 resource "aws_lambda_permission" "extractor_from_s3" {
   statement_id   = "AllowExecutionFromS3"
   action         = "lambda:InvokeFunction"

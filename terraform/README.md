@@ -13,16 +13,19 @@
 - PDF 復号用 ZIP Lambda（`pdf-unlock-lambda-zip`）
 - S3 から両 Lambda を呼び出すためのリソースベースポリシー
 - 両 Lambda の CloudWatch Logs ロググループ
+- SES domain identity、カスタム MAIL FROM、設定セット
+- SES Receipt Rule Set、active 設定、給与明細メールを S3 に保存する Receipt Rule
+- SES の受信、DKIM、カスタム MAIL FROM に必要な Route53 レコード
 
 S3 内のオブジェクトは Terraform の管理対象ではありません。
 
-SES Receipt Rule は管理対象に含めていません。受信ドメイン、受信者、ルールセット、ルールの優先順などが Org・アカウントごとに異なるため、対象環境の SES 設計に合わせて別途設定してください。
+同じ Receipt Rule Set に存在する別用途の `receive-to-s3` ルールと、個人メールアドレスの SES identity はこのプロジェクトの管理対象外です。共有する SES 設定セット自体は管理しますが、個人メールアドレス identity との関連付けは管理しません。
 
 ## 前提条件
 
 - Terraform 1.6 以上
 - AWS CLI で対象アカウントへ認証できること
-- Terraform 実行者に S3、Lambda、IAM、CloudWatch Logs の管理権限があること
+- Terraform 実行者に S3、Lambda、IAM、CloudWatch Logs、SES、Route53 の管理権限があること
 - `deploy/email-extractor.zip` が作成済みであること
 - `deploy/pdf-unlock-function.zip` が Lambda の実行環境と互換性のある依存パッケージを含んでいること
 - SES を使用するリージョンと Lambda のリージョンが一致していること
@@ -67,7 +70,16 @@ Copy-Item terraform.tfvars.example terraform.tfvars
 ```hcl
 aws_region  = "ap-northeast-1"
 bucket_name = "example-prod-pdf-unlock-123456789012"
+route53_zone_id = "Z0123456789EXAMPLE"
+ses_domain                  = "ses.example.com"
+ses_mail_from_domain        = "mail.ses.example.com"
+ses_configuration_set_name = "example-configuration-set"
+ses_receipt_rule_set_name   = "example-receiving"
+ses_receipt_rule_name       = "save-mail-to-s3"
+ses_receipt_recipient       = "recipient@ses.example.com"
 ```
+
+Route53とSESの各値にはデフォルトがないため、すべて対象環境に合わせて指定します。
 
 Lambda や IAM ロールの名前もアカウント内の命名規則に応じて変更できます。
 
@@ -110,10 +122,7 @@ terraform apply tfplan
 
 新規アカウントでは、管理対象リソースが `add` として表示されます。既存環境では、意図した変更以外が表示されないことを確認してください。
 
-`terraform apply` 後、SES Receipt Rule の S3 アクションで次を指定します。
-
-- 保存先バケット：`bucket_name` で作成したバケット
-- オブジェクトキープレフィックス：`kyuyo-mail-original/`
+`terraform apply` により、SES Receipt Rule の S3 アクションと必要な Route53 レコードも作成されます。
 
 ## 既存環境での通常運用
 

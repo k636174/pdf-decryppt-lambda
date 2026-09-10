@@ -1,9 +1,10 @@
 param(
-    [string]$PythonLauncher = "py"
+    [string]$PythonLauncher = "python"
 )
 
 $ErrorActionPreference = "Stop"
 
+$pythonCommand = (Get-Command $PythonLauncher -ErrorAction Stop).Source
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $deployDir = Join-Path $repoRoot "deploy"
 $packageDir = Join-Path $deployDir "package"
@@ -20,7 +21,7 @@ if (Test-Path -LiteralPath $packageDir) {
 }
 New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
 
-& $PythonLauncher -3.13 -m pip install `
+& $pythonCommand -m pip install `
     --requirement $requirements `
     --target $packageDir `
     --platform manylinux2014_x86_64 `
@@ -28,17 +29,36 @@ New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
     --python-version 3.13 `
     --only-binary=:all:
 
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to install Lambda dependencies (pip exit code: $LASTEXITCODE)."
+}
+
 Copy-Item -LiteralPath $unlockHandler -Destination $packageDir
 
-Compress-Archive `
-    -Path (Join-Path $packageDir "*") `
-    -DestinationPath $unlockZip `
-    -Force
+Remove-Item -LiteralPath $unlockZip -Force -ErrorAction SilentlyContinue
+Push-Location $packageDir
+try {
+    $archiveEntries = Get-ChildItem -Force | Select-Object -ExpandProperty Name
+    & $pythonCommand -m zipfile -c $unlockZip @archiveEntries
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to create the PDF unlock Lambda ZIP (exit code: $LASTEXITCODE)."
+    }
+}
+finally {
+    Pop-Location
+}
 
-Compress-Archive `
-    -LiteralPath $extractorHandler `
-    -DestinationPath $extractorZip `
-    -Force
+Remove-Item -LiteralPath $extractorZip -Force -ErrorAction SilentlyContinue
+Push-Location (Split-Path -Parent $extractorHandler)
+try {
+    & $pythonCommand -m zipfile -c $extractorZip (Split-Path -Leaf $extractorHandler)
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to create the email extractor Lambda ZIP (exit code: $LASTEXITCODE)."
+    }
+}
+finally {
+    Pop-Location
+}
 
 Write-Host "Created $unlockZip"
 Write-Host "Created $extractorZip"

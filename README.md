@@ -1,5 +1,5 @@
 # pdf-unlock-lambda
-
+![構成図](./output/pdf-unlock-aws-architecture-associated-v2.png)
 SES が S3 の `kyuyo-mail-original/` に保存した生メールから PDF 添付を抽出し、復号Lambdaへ連携する2つのZIP形式 AWS Lambda関数です。PDFの復号には `pypdf[crypto]` を使用します。
 
 ## 処理の流れ
